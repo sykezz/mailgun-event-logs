@@ -35,9 +35,6 @@ def get_logs():
     json_data[page] = response.json()
     next_page = response.json()["paging"]["next"]
 
-    with open("data1.json", "w") as f:
-        json.dump(response.json(), f)
-
     while len(items) == 300:
         response = request_page(next_page)
         items = response.json()["items"]
@@ -45,10 +42,6 @@ def get_logs():
         page += 1
         json_data[page] = response.json()
         next_page = response.json()["paging"]["next"]
-
-        with open("data2.json", "w") as f:
-            json.dump(response.json(), f)
-
         # break;
 
     print(
