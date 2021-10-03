@@ -7,10 +7,10 @@ import sys
 
 
 class MailgunEvents:
-    def __init__(self):
+    def __init__(self, start_time):
         load_dotenv()
-        self.log_date = pendulum.yesterday("Asia/Kuala_Lumpur")
-        self.timestamp = pendulum.now().format("Y-MM-DD-HHmmss")
+        self.start_time = start_time
+        self.url = os.getenv("MAILGUN_URL", "https://api.mailgun.net")
         self.apikey = os.getenv("MAILGUN_APIKEY")
         self.domain = os.getenv("MAILGUN_DOMAIN")
         self.limit = int(os.getenv("MAILGUN_LIMIT", 300))
@@ -32,9 +32,9 @@ class MailgunEvents:
     # Request events (first page) from Mailgun
     def req_first_page(self):
         response = self.req(
-            os.getenv("MAILGUN_URL") + "/v3/" + self.domain + "/events",
+            self.url + "/v3/" + self.domain + "/events",
             {
-                "begin": self.log_date.to_rfc822_string(),
+                "begin": self.start_time.to_rfc822_string(),
                 "ascending": "yes",
                 "limit": self.limit,
             },
@@ -69,8 +69,9 @@ class MailgunEvents:
 
     # Save event logs into file
     def save_events(self, events):
-        log_dir = self.log_dir + "/" + self.log_date.format("Y-MM")
-        filename = f"{self.timestamp}-{str(self.page)}.json"
+        timestamp = pendulum.now()
+        log_dir = self.log_dir + "/" + timestamp.format("Y-MM")
+        filename = f"{timestamp.format('Y-MM-DD-HHmmss')}-{str(self.page)}.json"
 
         if not os.path.exists(log_dir):
             os.mkdir(log_dir)
