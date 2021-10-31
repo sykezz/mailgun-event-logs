@@ -5,9 +5,11 @@ import json
 import pendulum
 import sys
 
+from splunk import SplunkHEC
+
 
 class MailgunEvents:
-    def __init__(self, start_time):
+    def __init__(self, start_time, splunk, save_logs):
         load_dotenv()
         self.start_time = start_time
         self.url = os.getenv("MAILGUN_URL", "https://api.mailgun.net")
@@ -17,6 +19,8 @@ class MailgunEvents:
         self.log_dir = os.getenv("LOG_DIR")
         self.total_items = 0
         self.page = 0
+        self.splunk = splunk
+        self.save_logs = save_logs
 
     # Mailgun request handling
     def req(self, url, options={}):
@@ -67,8 +71,17 @@ class MailgunEvents:
         sys.stdout.write(f"Events fetched ({str(len(items))}). Page: {str(self.page)}" + "\n")
         return {"count": len(items), "next_page": next_page}
 
-    # Save event logs into file
+    # Save event logs into file/splunk
     def save_events(self, events):
+        if self.splunk:
+            splunkhec = SplunkHEC
+            splunkhec.send_events(events)
+
+            # If --save is not provided with --splunk, skip save
+            if not self.save_logs:
+                return
+
+        # Save logs file
         timestamp = pendulum.now()
         log_dir = self.log_dir + "/" + timestamp.format("Y-MM")
         filename = f"{timestamp.format('Y-MM-DD-HHmmss')}-{str(self.page)}.json"
