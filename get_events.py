@@ -12,6 +12,8 @@ parser.add_argument(
     help="Get event logs by daily or hourly",
     choices=["daily", "hourly"]
 )
+parser.add_argument("--splunk", help="Send events to Splunk", action="store_true")
+parser.add_argument("--save", help="Save event logs. Logs are saved by default when not using --splunk option", action="store_true")
 args = parser.parse_args()
 
 if args.type == "daily":
@@ -22,5 +24,5 @@ else:  # hourly
         pendulum.now().subtract(hours=1).replace(microsecond=0, second=0, minute=0)
     )
 
-mgl = MailgunEvents(start_time)
+mgl = MailgunEvents(start_time, args.splunk, args.save)
 mgl.get_events()
